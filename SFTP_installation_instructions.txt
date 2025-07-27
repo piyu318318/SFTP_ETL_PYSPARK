@@ -1,0 +1,76 @@
+
+This file elaborates how to install the SFTP on windows using commands
+
+🔹 Step 1: Installation and
+1. Close your current PowerShell window.
+2. Open PowerShell as Administrator:
+Press Windows key.
+Type PowerShell.
+Right-click on "Windows PowerShell".
+Click “Run as administrator”.
+Click Yes on the UAC (User Account Control) popup.
+
+
+3. Now in powershell run the install command again:
+
+command -
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+
+
+🟢 You’ll now see the feature installing successfully.
+After that, follow up with commands:
+command -
+Start-Service sshd
+command -
+Set-Service -Name sshd -StartupType 'Automatic'
+
+🔹 Step 2: Allow SFTP (SSH) in Windows Firewall
+Still in Admin PowerShell execute below command :
+New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (SSH)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22
+
+
+🔹 Step 3: Create SFTP User and Folder
+net user sftpuser StrongPassword@123 /add
+Replace StrongPassword@123 with a password you choose.
+
+
+🔹 Step 4: Create folder and set permissions:
+mkdir C:\SFTP\sftpuser
+icacls "C:\SFTP\sftpuser" /grant "sftpuser:(OI)(CI)F"
+
+
+🔹 Step 5: Configure SFTP Access Only (Optional but Recommended)
+1. Open SSH configuration file:
+notepad "C:\ProgramData\ssh\sshd_config"
+2. Scroll to the bottom, and add this block:
+
+Match User sftpuser
+    ChrootDirectory C:\SFTP\sftpuser
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
+    X11Forwarding no
+👉 Save and close Notepad.
+
+🔹 Step 6: Restart SSH Server to apply config
+
+Restart-Service sshd
+
+
+
+✅ You're done!
+You can now connect to your Windows 11 SFTP server using:
+
+| Setting      | Value                |
+| ------------ | -------------------- |
+| **Host/IP**  | Your PC’s IP address |
+| **Port**     | 22                   |
+| **Protocol** | SFTP                 |
+| **Username** | `sftpuser`           |
+| **Password** | The one you set      |
+
+
+
+step 7 :instllation WinSCP  on your machine
+download the WinSCP  from browser here is link  -> https://winscp.net/eng/download.php
+
+
