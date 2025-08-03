@@ -38,5 +38,5 @@ columns = [
 ]
 df = pd.DataFrame(data, columns=columns)
 
-df.to_csv("loan_data_1.csv", index=False)
+df.to_csv("loan_data_4.csv", index=False)
 print("✅ Mock loan data generated and saved as 'mock_loan_portfolio.csv'")

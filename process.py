@@ -1,34 +1,45 @@
-from datetime import datetime
 import pysftp
 from io import BytesIO
 import pandas as pd
+from sqlalchemy import create_engine
 
-
-
-hostname = "192.168.1.33"
+hostname = "192.168.1.34"
 username = "sftpuser"
 password = "StrongPassword@123"
-remote_path = "/loan_data_1.csv"
+remote_path = "/"
+
+
+mysql_user = 'root'
+mysql_password = 'root123'
+mysql_host = 'localhost'
+mysql_db = 'loan'
+
 
 cnopts = pysftp.CnOpts()
 cnopts.hostkeys = None
 
+
+engine = create_engine(f"mysql+mysqlconnector://{mysql_user}:{mysql_password}@{mysql_host}/{mysql_db}")
+
+
 with pysftp.Connection(host=hostname, username=username, password=password, cnopts=cnopts) as sftp:
     print(f"Connected to {hostname}")
 
-    with sftp.open(remote_path, mode='rb') as remote_file:
-        buffer = BytesIO(remote_file.read())
+    sftp.cwd(remote_path)
+    files = sftp.listdir()
 
-    df = pd.read_csv(buffer)
+    csv_files = [f for f in files if f.endswith('.csv')]
 
+    for file_name in csv_files:
+        with sftp.open(f"{remote_path}/{file_name}", mode='rb') as remote_file:
+            buffer = BytesIO(remote_file.read())
 
+        try:
+            df = pd.read_csv(buffer)
 
-    print("CSV data loaded into memory:")
+            print(df.head())
 
-    df['loan_amount'] = df['loan_amount'].fillna(0)
-    df['emi'] = df['emi'].fillna(0)
-    df['start_date'] = pd.to_datetime(df['start_date']).dt.date
-    df['end_date'] = pd.to_datetime(df['end_date']).dt.date
-    df['status'] = df['status'].str.strip().str.lower()
+            df.to_sql(name='loan_details', con=engine, if_exists='append', index=False)
 
-    print(df.head())
+        except Exception as e:
+            print(f"error processing {file_name}: {e}")
